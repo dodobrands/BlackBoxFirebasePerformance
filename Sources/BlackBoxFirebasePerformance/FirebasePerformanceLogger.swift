@@ -91,9 +91,9 @@ extension FirebasePerformanceLogger {
         let message: String
         switch event {
         case let start as BlackBox.StartEvent:
-            message = forMetric ? start.message : start.rawMessage
+            message = forMetric ? start.message : start.rawMessage.description
         case let start as BlackBox.EndEvent:
-            message = forMetric ? start.message : start.rawMessage
+            message = forMetric ? start.message : start.rawMessage.description
         default:
             message = event.message
         }
