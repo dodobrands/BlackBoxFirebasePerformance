@@ -23,8 +23,8 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         .package(
-            url: "git@github.com:dodopizza/BlackBox-ios.git",
-            from: "0.6.0"
+            url: "git@github.com:dodopizza/BlackBox.git",
+            from: "1.0.0"
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk.git",
@@ -37,7 +37,7 @@ let package = Package(
         .target(
             name: targetName,
             dependencies: [
-                .product(name: "BlackBox", package: "BlackBox-ios"),
+                "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
             ]
         ),
@@ -45,7 +45,7 @@ let package = Package(
             name: testTargetName,
             dependencies: [
                 .targetItem(name: targetName, condition: nil),
-                .product(name: "BlackBox", package: "BlackBox-ios"),
+                "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
             ]
         ),
