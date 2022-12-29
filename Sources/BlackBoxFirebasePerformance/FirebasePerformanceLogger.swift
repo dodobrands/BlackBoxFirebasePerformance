@@ -10,7 +10,7 @@ import Foundation
 import BlackBox
 import FirebasePerformance
 
-class FirebasePerformanceLogger: BBLoggerProtocol {
+public class FirebasePerformanceLogger: BBLoggerProtocol {
     private let levels: [BBLogLevel]
     
     private var traces = [UUID: Trace]()
@@ -19,15 +19,15 @@ class FirebasePerformanceLogger: BBLoggerProtocol {
         self.levels = levels
     }
     
-    func log(_ event: BlackBox.ErrorEvent) {
+    public func log(_ event: BlackBox.ErrorEvent) {
         incrementMetricForParentEvent(of: event)
     }
     
-    func log(_ event: BlackBox.GenericEvent) {
+    public func log(_ event: BlackBox.GenericEvent) {
         incrementMetricForParentEvent(of: event)
     }
     
-    func logStart(_ event: BlackBox.StartEvent) {
+    public func logStart(_ event: BlackBox.StartEvent) {
         let traceName = name(of: event, forMetric: false)
         guard let trace = Performance.startTrace(name: traceName) else { return }
         
@@ -37,7 +37,7 @@ class FirebasePerformanceLogger: BBLoggerProtocol {
         traces[event.id] = trace
     }
     
-    func logEnd(_ event: BlackBox.EndEvent) {
+    public func logEnd(_ event: BlackBox.EndEvent) {
         let id = event.startEvent.id
         
         guard let trace = self.traces[id] else { return }
