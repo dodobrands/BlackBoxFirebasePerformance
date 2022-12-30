@@ -29,8 +29,8 @@ jobs:
   unit-tests-spm:
     runs-on: 'ios'
 
-    timeout-minutes: 5
 
+    timeout-minutes: 15
     strategy:
       matrix:
         DESTINATION: ["platform=iOS Simulator,name=iPhone 11", "platform=tvOS Simulator,name=Apple TV"]
