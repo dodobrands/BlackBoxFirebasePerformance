@@ -29,6 +29,7 @@ jobs:
     runs-on: 'macos-13'
 
     timeout-minutes: 15
+    
     strategy:
       matrix:
         DESTINATION: ["platform=iOS Simulator,name=iPhone 11", "platform=tvOS Simulator,name=Apple TV"]
@@ -41,11 +42,19 @@ jobs:
       uses: ./.github/actions/prepare_env_app_build
         
     - name: Build
-      run: xcodebuild build-for-testing -scheme ${{ env.SCHEME }} -destination '${{ matrix.DESTINATION }}'
+      run: >
+        xcodebuild build-for-testing
+        -scheme ${{ env.SCHEME }}
+        -destination '${{ matrix.DESTINATION }}'
+        -quiet
 
     - name: Test
       if: ${{ !contains(matrix.DESTINATION, 'watchOS') }} # watchOS Simulator is too slow on GitHub-hosted Runners, expectation-related tests are flaky
-      run: xcodebuild test -scheme ${{ env.SCHEME }} -destination '${{ matrix.DESTINATION }}'
+      run: >
+        xcodebuild test
+        -scheme ${{ env.SCHEME }}
+        -destination '${{ matrix.DESTINATION }}'
+        -quiet
 
   # This allows us to have a branch protection rule for tests and deploys with matrix
   status-for-matrix:
