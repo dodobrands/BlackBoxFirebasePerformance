@@ -21,7 +21,7 @@ env:
 
 jobs:
   unit-tests-spm:
-    runs-on: 'macos-13'
+    runs-on: 'macos-13-xl'
 
     timeout-minutes: 15
 
@@ -62,7 +62,7 @@ jobs:
 
   # This allows us to have a branch protection rule for tests and deploys with matrix
   status-for-matrix:
-    runs-on: 'macos-latest'
+    runs-on: 'macos-latest-xl'
     needs: ['unit-tests-spm']
     if: always()
     steps:
