@@ -5,7 +5,6 @@ on:
     types: [opened, edited, reopened, synchronize]
     branches:
       - 'main'
-  workflow_dispatch:
 
 defaults:
   run:
