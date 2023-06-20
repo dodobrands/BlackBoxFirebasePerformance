@@ -23,11 +23,10 @@ env:
   LANGUAGE: "en_US.UTF-8"
   LC_ALL: "en_US.UTF-8"
   SCHEME: "BlackBoxFirebasePerformance"
-  XCODE_VERSION: '~>14'
 
 jobs:
   unit-tests-spm:
-    runs-on: 'macos-latest'
+    runs-on: 'macos-13'
 
     timeout-minutes: 15
     strategy:
@@ -42,8 +41,6 @@ jobs:
 
     - name: Prepare Environment for App Build
       uses: ./.github/actions/prepare_env_app_build
-      with:
-        xcode-version: ${{ env.XCODE_VERSION }}
         
     - name: Build
       run: xcodebuild build-for-testing -scheme ${{ env.SCHEME }} -destination '${{ matrix.DESTINATION }}'
