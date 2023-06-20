@@ -38,6 +38,12 @@ jobs:
 
     - name: Resolve Dependencies
       run: xcodebuild -resolvePackageDependencies
+
+    - name: Create Simulators
+      run: |
+        xcrun simctl delete all
+        xcrun simctl create "iPhone 11" com.apple.CoreSimulator.SimDeviceType.iPhone-11
+        xcrun simctl create "Apple TV" com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K
       
     - name: Build
       run: >
