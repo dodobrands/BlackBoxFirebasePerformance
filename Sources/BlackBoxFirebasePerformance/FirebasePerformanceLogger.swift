@@ -66,9 +66,9 @@ extension FirebasePerformanceLogger {
     }
     
     private func stringifiedValue(from value: Any) -> String? {
-        guard !isNil(value) else { return nil }
-        
         switch value {
+        case Optional<Any>.none:
+            return nil
         case let value as String:
             return value
         case let value as Error:
@@ -110,16 +110,4 @@ extension FirebasePerformanceLogger {
         
         return name
     }
-}
-
-protocol OptionalProtocol {
-    var isNil: Bool { get }
-}
-
-extension Optional: OptionalProtocol {
-    public var isNil: Bool { return self == nil }
-}
-
-func isNil(_ input: Any) -> Bool {
-    return (input as? OptionalProtocol)?.isNil ?? false
 }
