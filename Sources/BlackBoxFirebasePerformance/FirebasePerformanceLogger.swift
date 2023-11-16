@@ -14,7 +14,7 @@ import FirebasePerformance
 public class FirebasePerformanceLogger: BBLoggerProtocol {
     private let levels: [BBLogLevel]
     
-    private var traces = ThreadSafeContainer([UUID: Trace]())
+    private var traces = DBThreadSafeContainer([UUID: Trace]())
     
     public init(levels: [BBLogLevel]) {
         self.levels = levels
@@ -101,10 +101,10 @@ extension FirebasePerformanceLogger {
         
         let name: String
         if forMetric {
-            // Load menu
+            // Message
             name = message
         } else {
-            // [Menu.ImportService] Load menu
+            // [TargetName.ClassName] Message
             let source = [event.source.module, event.source.filename].joined(separator: ".")
             name = "[\(source)] \(message)"
         }
