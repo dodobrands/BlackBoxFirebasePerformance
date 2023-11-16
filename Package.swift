@@ -29,6 +29,10 @@ let package = Package(
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk.git",
             .upToNextMajor(from: "10.0.0")
+        ),
+        .package(
+            url: "git@github.com:dodobrands/DBThreadSafe-ios",
+            .upToNextMajor(from: "1.1.0")
         )
     ],
     targets: [
@@ -38,7 +42,8 @@ let package = Package(
             name: targetName,
             dependencies: [
                 "BlackBox",
-                .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
+                .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
+                .product(name: "DBThreadSafe", package: "DBThreadSafe-ios")
             ]
         ),
         .testTarget(

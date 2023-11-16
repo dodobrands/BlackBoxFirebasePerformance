@@ -28,6 +28,15 @@
       }
     },
     {
+      "identity" : "dbthreadsafe-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:dodobrands/DBThreadSafe-ios",
+      "state" : {
+        "revision" : "89e7b76d45be11f8642a0c885bc32f41c3b7abe3",
+        "version" : "1.1.0"
+      }
+    },
+    {
       "identity" : "firebase-ios-sdk",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/firebase-ios-sdk.git",
