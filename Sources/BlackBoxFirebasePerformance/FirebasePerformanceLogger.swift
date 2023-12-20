@@ -8,12 +8,13 @@
 
 import Foundation
 import BlackBox
+import DBThreadSafe
 import FirebasePerformance
 
 public class FirebasePerformanceLogger: BBLoggerProtocol {
     private let levels: [BBLogLevel]
     
-    private var traces = [UUID: Trace]()
+    private var traces = DBThreadSafeContainer([UUID: Trace]())
     
     public init(levels: [BBLogLevel]) {
         self.levels = levels
@@ -34,20 +35,20 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         event.userInfo.map { self.addAttributes(to: trace, from: $0) }
         incrementMetricForParentEvent(of: event)
         
-        traces[event.id] = trace
+        traces.write { $0[event.id] = trace }
     }
     
     public func logEnd(_ event: BlackBox.EndEvent) {
         let id = event.startEvent.id
         
-        guard let trace = self.traces[id] else { return }
+        guard let trace = traces.read ({ $0[id] })  else { return }
         
         event.userInfo.map { self.addAttributes(to: trace, from: $0) }
         incrementMetricForParentEvent(of: event)
         
         trace.stop()
         
-        traces[id] = nil
+        traces.write { $0[id] = nil }
     }
     
     func incrementMetric(trace: Trace, metricName: String) {
@@ -80,7 +81,7 @@ extension FirebasePerformanceLogger {
     
     private func incrementMetricForParentEvent(of event: BlackBox.GenericEvent) {
         guard let parentEvent = event.parentEvent else { return }
-        guard let trace = traces[parentEvent.id] else { return }
+        guard let trace = traces.read({ $0[parentEvent.id] }) else { return }
         
         let metricName = name(of: event, forMetric: true)
         
@@ -100,10 +101,10 @@ extension FirebasePerformanceLogger {
         
         let name: String
         if forMetric {
-            // Load menu
+            // Message
             name = message
         } else {
-            // [Menu.ImportService] Load menu
+            // [TargetName.ClassName] Message
             let source = [event.source.module, event.source.filename].joined(separator: ".")
             name = "[\(source)] \(message)"
         }
