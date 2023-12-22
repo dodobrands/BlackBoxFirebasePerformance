@@ -24,7 +24,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         .package(
             url: "https://github.com/dodobrands/BlackBox",
-            .upToNextMajor(from: "2.0.0")
+            .upToNextMajor(from: "3.0.0")
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk",
