@@ -12,7 +12,7 @@ let package = Package(
     name: packageName,
     platforms: [
         .iOS(.v12),
-        .tvOS(.v12)
+        .tvOS(.v13)
     ],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
@@ -28,7 +28,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk",
-            .upToNextMajor(from: "10.0.0")
+            .upToNextMajor(from: "11.6.0")
         ),
         .package(
             url: "https://github.com/dodobrands/DBThreadSafe-ios",
