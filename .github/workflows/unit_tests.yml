@@ -5,29 +5,22 @@ on:
     branches:
       - 'main'
 
-defaults:
-  run:
-    shell: zsh {0}
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  LANG: "en_US.UTF-8"
-  LANGUAGE: "en_US.UTF-8"
-  LC_ALL: "en_US.UTF-8"
-  SCHEME: "BlackBoxFirebasePerformance"
-
 jobs:
-  unit-tests-spm:
-    runs-on: 'macos-13'
+  tests:
+    runs-on: 'macos-15'
 
     timeout-minutes: 15
 
+    env:
+      SCHEME: "BlackBoxFirebasePerformance"
+
     strategy:
       matrix:
-        DESTINATION: ["platform=iOS Simulator,name=iPhone 11", "platform=tvOS Simulator,name=Apple TV"]
+        DESTINATION: ["platform=iOS Simulator,name=iPhone 16", "platform=tvOS Simulator,name=Apple TV"]
 
     steps:
     - name: Get source code
@@ -38,12 +31,6 @@ jobs:
 
     - name: Resolve Dependencies
       run: xcodebuild -resolvePackageDependencies
-
-    - name: Create Simulators
-      run: |
-        xcrun simctl delete all
-        xcrun simctl create "iPhone 11" com.apple.CoreSimulator.SimDeviceType.iPhone-11
-        xcrun simctl create "Apple TV" com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K
       
     - name: Build
       run: >
@@ -53,22 +40,23 @@ jobs:
         -quiet
 
     - name: Test
-      if: ${{ !contains(matrix.DESTINATION, 'watchOS') }} # watchOS Simulator is too slow on GitHub-hosted Runners, expectation-related tests are flaky
       run: >
-        xcodebuild test
+        xcodebuild test-without-building
         -scheme ${{ env.SCHEME }}
         -destination '${{ matrix.DESTINATION }}'
         -quiet
 
   # This allows us to have a branch protection rule for tests and deploys with matrix
   status-for-matrix:
-    runs-on: 'macos-latest'
-    needs: ['unit-tests-spm']
+    runs-on: 'ubuntu-latest'
+    needs: tests
     if: always()
     steps:
-      - name: Successful deploy
-        if: ${{ !(contains(needs.*.result, 'failure')) }}
-        run: exit 0
-      - name: Failing deploy
-        if: ${{ contains(needs.*.result, 'failure') }}
-        run: exit 1
+      - name: Calculate matrix result
+        run: |
+          result="${{ needs.tests.result }}"
+          if [[ $result == "success" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
