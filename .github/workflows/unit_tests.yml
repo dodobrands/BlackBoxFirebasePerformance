@@ -12,8 +12,8 @@ concurrency:
   SCHEME: "BlackBoxFirebasePerformance"
 
 jobs:
-  unit-tests-spm:
     runs-on: 'macos-13'
+  tests:
 
     timeout-minutes: 15
 
