@@ -9,13 +9,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-  SCHEME: "BlackBoxFirebasePerformance"
-
 jobs:
     runs-on: 'macos-13'
   tests:
 
     timeout-minutes: 15
+
+    env:
+      SCHEME: "BlackBoxFirebasePerformance"
 
     strategy:
       matrix:
