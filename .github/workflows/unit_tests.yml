@@ -5,18 +5,10 @@ on:
     branches:
       - 'main'
 
-defaults:
-  run:
-    shell: zsh {0}
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  LANG: "en_US.UTF-8"
-  LANGUAGE: "en_US.UTF-8"
-  LC_ALL: "en_US.UTF-8"
   SCHEME: "BlackBoxFirebasePerformance"
 
 jobs:
