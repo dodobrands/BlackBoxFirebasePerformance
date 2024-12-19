@@ -10,8 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-    runs-on: 'macos-13'
   tests:
+    runs-on: 'macos-15'
 
     timeout-minutes: 15
 
