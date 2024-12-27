@@ -50,7 +50,6 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
             self.addAttributes(to: trace, from: $0)
             self.setMetrics(to: trace, from: $0)
         }
-        incrementMetricForParentEvent(of: event)
         
         trace.stop()
         
