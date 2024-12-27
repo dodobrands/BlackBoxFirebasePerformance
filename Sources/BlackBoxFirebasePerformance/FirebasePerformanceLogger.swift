@@ -33,8 +33,7 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         guard let trace = Performance.startTrace(name: traceName) else { return }
         
         event.userInfo.map {
-            self.addAttributes(to: trace, from: $0)
-            self.setMetrics(to: trace, from: $0)
+            self.setMetricsOrAddAttributes(to: trace, from: $0)
         }
         incrementMetricForParentEvent(of: event)
         
@@ -47,8 +46,7 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         guard let trace = traces.read ({ $0[id] })  else { return }
         
         event.userInfo.map {
-            self.addAttributes(to: trace, from: $0)
-            self.setMetrics(to: trace, from: $0)
+            self.setMetricsOrAddAttributes(to: trace, from: $0)
         }
         
         trace.stop()
@@ -57,62 +55,76 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
     }
 }
 
-// MARK: Attributes
 extension FirebasePerformanceLogger {
-    // https://firebase.google.com/docs/perf-mon/custom-code-traces?platform=ios
-    private func addAttributes(to trace: Trace, from userInfo: BBUserInfo) {
-        userInfo.forEach { attributeName, value in
-            guard let stringifiedValue = stringifiedValue(from: value) else { return }
-            
-            trace.setValue(stringifiedValue, forAttribute: attributeName)
-        }
-    }
-    
-    private func stringifiedValue(from value: Any) -> String? {
-        switch value {
-        case Optional<Any>.none:
-            return nil
-        case let value as String:
-            return value
-        case let value as Error:
-            return String(reflecting: value)
-        case _ as Int:
-            return nil
-        default:
-            return String(describing: value)
+    func setMetricsOrAddAttributes(to trace: Trace, from userInfo: BBUserInfo) {
+        userInfo.forEach { key, value in
+            if let metric = Metric((key, value)) {
+                trace.setValue(metric.value, forMetric: metric.name)
+            } else if let attribute = Attribute((key, value)) {
+                // https://firebase.google.com/docs/perf-mon/custom-code-traces?platform=ios
+                trace.setValue(attribute.value, forAttribute: attribute.name)
+            }
         }
     }
 }
 
-// MARK: Metrics
+// MARK: - Attributes
+extension FirebasePerformanceLogger {
+    struct Attribute {
+        let name: String
+        let value: String
+        
+        init(name: String, value: String) {
+            self.name = name
+            self.value = value
+        }
+        
+        init?(_ pair: (key: String, value: Any)) {
+            let stringValue: String
+            switch pair.value {
+            case Optional<Any>.none:
+                return nil
+            case let value as String:
+                stringValue = value
+            case let value as Error:
+                stringValue = String(reflecting: value)
+            default:
+                stringValue = String(describing: pair.value)
+            }
+            
+            self.init(name: pair.key, value: stringValue)
+        }
+    }
+}
+
+// MARK: - Metrics
 extension FirebasePerformanceLogger {
     struct Metric {
         let name: String
         let value: Int64
-    }
-    
-    private func setMetrics(to trace: Trace, from userInfo: BBUserInfo) {
-        let mterics = metrics(from: userInfo)
-        mterics.forEach { trace.setValue($0.value, forMetric: $0.name) }
-    }
-    
-    private func metrics(from userInfo: BBUserInfo) -> [Metric] {
-        userInfo.compactMap { key, value in
-            guard let value = int64Value(from: value) else { return nil }
-            return Metric(name: key, value: value)
+        
+        init(name: String, value: Int64) {
+            self.name = name
+            self.value = value
+        }
+        
+        init?(_ pair: (key: String, value: Any)) {
+            let intValue: Int64
+            if let value = pair.value as? Int {
+                intValue = Int64(value)
+            } else if let value = pair.value as? UInt {
+                intValue = Int64(value)
+            } else {
+                return nil
+            }
+            
+            self.init(name: pair.key, value: intValue)
         }
     }
-    
-    private func int64Value(from value: Any) -> Int64? {
-        if let value = value as? Int {
-            return Int64(value)
-        } else if let value = value as? UInt {
-            return Int64(value)
-        } else {
-            return nil
-        }
-    }
-    
+}
+ 
+// MARK: Parent Event Metrics
+extension FirebasePerformanceLogger {
     private func incrementMetricForParentEvent(of event: BlackBox.GenericEvent) {
         guard let parentEvent = event.parentEvent else { return }
         guard let trace = traces.read({ $0[parentEvent.id] }) else { return }
