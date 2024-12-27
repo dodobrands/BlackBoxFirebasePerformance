@@ -32,7 +32,10 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         let traceName = name(of: event, forMetric: false)
         guard let trace = Performance.startTrace(name: traceName) else { return }
         
-        event.userInfo.map { self.addAttributes(to: trace, from: $0) }
+        event.userInfo.map {
+            self.addAttributes(to: trace, from: $0)
+            self.setMetrics(to: trace, from: $0)
+        }
         incrementMetricForParentEvent(of: event)
         
         traces.write { $0[event.id] = trace }
@@ -43,19 +46,19 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         
         guard let trace = traces.read ({ $0[id] })  else { return }
         
-        event.userInfo.map { self.addAttributes(to: trace, from: $0) }
+        event.userInfo.map {
+            self.addAttributes(to: trace, from: $0)
+            self.setMetrics(to: trace, from: $0)
+        }
         incrementMetricForParentEvent(of: event)
         
         trace.stop()
         
         traces.write { $0[id] = nil }
     }
-    
-    func incrementMetric(trace: Trace, metricName: String) {
-        trace.incrementMetric(metricName, by: 1)
-    }
 }
 
+// MARK: Attributes
 extension FirebasePerformanceLogger {
     // https://firebase.google.com/docs/perf-mon/custom-code-traces?platform=ios
     private func addAttributes(to trace: Trace, from userInfo: BBUserInfo) {
@@ -74,8 +77,20 @@ extension FirebasePerformanceLogger {
             return value
         case let value as Error:
             return String(reflecting: value)
+        case _ as Int:
+            return nil
         default:
             return String(describing: value)
+        }
+    }
+}
+
+// MARK: Metrics
+extension FirebasePerformanceLogger {
+    private func setMetrics(to trace: Trace, from userInfo: BBUserInfo) {
+        userInfo.forEach { metricName, value in
+            guard let value = value as? Int64 else { return }
+            trace.setValue(value, forMetric: metricName)
         }
     }
     
@@ -85,7 +100,7 @@ extension FirebasePerformanceLogger {
         
         let metricName = name(of: event, forMetric: true)
         
-        incrementMetric(trace: trace, metricName: metricName)
+        trace.incrementMetric(metricName, by: 1)
     }
     
     private func name(of event: BlackBox.GenericEvent, forMetric: Bool) -> String {
