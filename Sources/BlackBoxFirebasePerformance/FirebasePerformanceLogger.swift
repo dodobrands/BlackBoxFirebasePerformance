@@ -110,11 +110,12 @@ extension FirebasePerformanceLogger {
         
         init?(_ pair: (key: String, value: Any)) {
             let intValue: Int64
-            if let value = pair.value as? Int {
+            switch pair.value {
+            case let value as Int:
                 intValue = Int64(value)
-            } else if let value = pair.value as? UInt {
+            case let value as UInt:
                 intValue = Int64(value)
-            } else {
+            default:
                 return nil
             }
             
