@@ -87,10 +87,30 @@ extension FirebasePerformanceLogger {
 
 // MARK: Metrics
 extension FirebasePerformanceLogger {
+    struct Metric {
+        let name: String
+        let value: Int64
+    }
+    
     private func setMetrics(to trace: Trace, from userInfo: BBUserInfo) {
-        userInfo.forEach { metricName, value in
-            guard let value = value as? Int64 else { return }
-            trace.setValue(value, forMetric: metricName)
+        let mterics = metrics(from: userInfo)
+        mterics.forEach { trace.setValue($0.value, forMetric: $0.name) }
+    }
+    
+    private func metrics(from userInfo: BBUserInfo) -> [Metric] {
+        userInfo.compactMap { key, value in
+            guard let value = int64Value(from: value) else { return nil }
+            return Metric(name: key, value: value)
+        }
+    }
+    
+    private func int64Value(from value: Any) -> Int64? {
+        if let value = value as? Int {
+            return Int64(value)
+        } else if let value = value as? UInt {
+            return Int64(value)
+        } else {
+            return nil
         }
     }
     
