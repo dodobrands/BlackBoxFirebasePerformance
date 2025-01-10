@@ -54,5 +54,6 @@ let package = Package(
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
             ]
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
