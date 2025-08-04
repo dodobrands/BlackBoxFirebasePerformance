@@ -11,8 +11,8 @@ let testTargetName = targetName + "Tests"
 let package = Package(
     name: packageName,
     platforms: [
-        .iOS(.v12),
-        .tvOS(.v13)
+        .iOS(.v15),
+        .tvOS(.v15)
     ],
     products: [
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
@@ -28,7 +28,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk",
-            .upToNextMajor(from: "11.6.0")
+            .upToNextMajor(from: "12.0.0")
         ),
         .package(
             url: "https://github.com/dodobrands/DBThreadSafe-ios",
