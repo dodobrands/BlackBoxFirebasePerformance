@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        DESTINATION: ["platform=iOS Simulator,name=iPhone 16", "platform=tvOS Simulator,name=Apple TV"]
+        DESTINATION: ["platform=iOS Simulator,name=iPhone 16", "platform=OS X", "platform=tvOS Simulator,name=Apple TV", "platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"]
 
     steps:
     - name: Get source code
@@ -40,6 +40,7 @@ jobs:
         -quiet
 
     - name: Test
+      if: ${{ !contains(matrix.DESTINATION, 'watchOS') }} # watchOS Simulator is too slow on GitHub-hosted Runners, expectation-related tests are flaky
       run: >
         xcodebuild test-without-building
         -scheme ${{ env.SCHEME }}
