@@ -11,14 +11,14 @@ concurrency:
 
 jobs:
   tests:
-    runs-on: 'macos-15'
+    runs-on: 'macos-26'
 
     timeout-minutes: 15
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
       SIM_DEVICE: "iPhone 16"
-      SIM_SYSTEM: "iOS18.2"
+      SIM_SYSTEM: "iOS26.2"
 
     strategy:
       matrix:
