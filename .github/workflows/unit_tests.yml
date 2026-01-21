@@ -17,34 +17,62 @@ jobs:
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
+      SIM_DEVICE: "iPhone 16"
+      SIM_SYSTEM: "iOS18.2"
 
     strategy:
       matrix:
-        DESTINATION: ["platform=iOS Simulator,name=iPhone 16", "platform=OS X", "platform=tvOS Simulator,name=Apple TV", "platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"]
+        include:
+          - destination: "platform=iOS Simulator,name=iPhone 16"
+            platform: ios
+          - destination: "platform=OS X"
+            platform: macos
+          - destination: "platform=tvOS Simulator,name=Apple TV"
+            platform: tvos
+          - destination: "platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"
+            platform: watchos
 
     steps:
-    - name: Get source code
-      uses: actions/checkout@v6
+      - name: Get source code
+        uses: actions/checkout@v6
 
-    - name: Prepare Environment for App Build
-      uses: ./.github/actions/prepare_env_app_build
+      - name: Prepare Environment for App Build
+        uses: ./.github/actions/prepare_env_app_build
 
-    - name: Resolve Dependencies
-      run: xcodebuild -resolvePackageDependencies
+      - name: Resolve Dependencies
+        run: xcodebuild -resolvePackageDependencies
+
+      - name: Create Simulator
+        id: create_simulator
+        if: matrix.platform == 'ios'
+        uses: ./.github/actions/create_sim
+        with:
+          name: ${{ env.SIM_DEVICE }}
+          device: ${{ env.SIM_DEVICE }}
+          system: ${{ env.SIM_SYSTEM }}
       
-    - name: Build
-      run: >
-        xcodebuild build-for-testing
-        -scheme ${{ env.SCHEME }}
-        -destination '${{ matrix.DESTINATION }}'
-        -quiet
+      - name: Select Destination
+        id: select-destination
+        run: |
+          if [ "${{ matrix.platform }}" = "ios" ]; then
+            echo "dest=platform=iOS Simulator,id=${{ steps.create_simulator.outputs.uuid }}" >> $GITHUB_OUTPUT
+          else
+            echo "dest=${{ matrix.destination }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Build
+        run: >
+          xcodebuild build-for-testing
+          -scheme ${{ env.SCHEME }}
+          -destination '${{ steps.select-destination.outputs.dest }}'
+          -quiet
 
-    - name: Test
-      run: >
-        xcodebuild test-without-building
-        -scheme ${{ env.SCHEME }}
-        -destination '${{ matrix.DESTINATION }}'
-        -quiet
+      - name: Test
+        run: >
+          xcodebuild test-without-building
+          -scheme ${{ env.SCHEME }}
+          -destination '${{ steps.select-destination.outputs.dest }}'
+          -quiet
 
   # This allows us to have a branch protection rule for tests and deploys with matrix
   status-for-matrix:
