@@ -17,20 +17,24 @@ jobs:
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
-      SIM_DEVICE: "iPhone 16"
-      SIM_SYSTEM: "iOS26.2"
 
     strategy:
       matrix:
         include:
-          - destination: "platform=iOS Simulator,name=iPhone 16"
+          - destination: "platform=iOS Simulator"
             platform: ios
+            device: "iPhone 16"
+            system: "iOS26.2"
           - destination: "platform=OS X"
             platform: macos
-          - destination: "platform=tvOS Simulator,name=Apple TV"
+          - destination: "platform=tvOS Simulator"
             platform: tvos
-          - destination: "platform=watchOS Simulator,name=Apple Watch Ultra 2 (49mm)"
+            device: "Apple TV"
+            system: "tvOS26.2"
+          - destination: "platform=watchOS Simulator"
             platform: watchos
+            device: "Apple Watch Ultra 2 (49mm)"
+            system: "watchOS26.2"
 
     steps:
       - name: Get source code
@@ -44,20 +48,20 @@ jobs:
 
       - name: Create Simulator
         id: create_simulator
-        if: matrix.platform == 'ios'
+        if: matrix.platform != 'macos'
         uses: ./.github/actions/create_sim
         with:
-          name: ${{ env.SIM_DEVICE }}
-          device: ${{ env.SIM_DEVICE }}
-          system: ${{ env.SIM_SYSTEM }}
+          name: ${{ matrix.device }}
+          device: ${{ matrix.device }}
+          system: ${{ matrix.system }}
       
       - name: Select Destination
         id: select-destination
         run: |
-          if [ "${{ matrix.platform }}" = "ios" ]; then
-            echo "dest=platform=iOS Simulator,id=${{ steps.create_simulator.outputs.uuid }}" >> $GITHUB_OUTPUT
-          else
+          if [ "${{ matrix.platform }}" = "macos" ]; then
             echo "dest=${{ matrix.destination }}" >> $GITHUB_OUTPUT
+          else
+            echo "dest=${{ matrix.destination }},id=${{ steps.create_simulator.outputs.uuid }}" >> $GITHUB_OUTPUT
           fi
       
       - name: Build
