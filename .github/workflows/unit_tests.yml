@@ -17,6 +17,7 @@ jobs:
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
+      OS_VERSION: "26.2"
 
     strategy:
       matrix:
@@ -24,17 +25,17 @@ jobs:
           - destination: "platform=iOS Simulator"
             platform: ios
             device: "iPhone 16"
-            system: "iOS26.2"
+            system_prefix: "iOS"
           - destination: "platform=OS X"
             platform: macos
           - destination: "platform=tvOS Simulator"
             platform: tvos
             device: "Apple TV"
-            system: "tvOS26.2"
+            system_prefix: "tvOS"
           - destination: "platform=watchOS Simulator"
             platform: watchos
             device: "Apple Watch Ultra 2 (49mm)"
-            system: "watchOS26.2"
+            system_prefix: "watchOS"
 
     steps:
       - name: Get source code
@@ -50,7 +51,7 @@ jobs:
         with:
           name: ${{ matrix.device }}
           device: ${{ matrix.device }}
-          system: ${{ matrix.system }}
+          system: ${{ matrix.system_prefix }}${{ env.OS_VERSION }}
 
       - name: Resolve Dependencies
         run: xcodebuild -resolvePackageDependencies
