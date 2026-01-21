@@ -44,6 +44,9 @@ jobs:
       - name: Prepare Environment for App Build
         uses: ./.github/actions/prepare_env_app_build
 
+      - name: Resolve Dependencies
+        run: xcodebuild -resolvePackageDependencies
+
       - name: Create Simulator
         id: create_simulator
         if: matrix.platform != 'macos'
@@ -52,9 +55,6 @@ jobs:
           name: ${{ matrix.device }}
           device: ${{ matrix.device }}
           system: ${{ matrix.system_prefix }}${{ env.OS_VERSION }}
-
-      - name: Resolve Dependencies
-        run: xcodebuild -resolvePackageDependencies
       
       - name: Select Destination
         id: select-destination
