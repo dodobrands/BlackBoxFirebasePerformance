@@ -6,6 +6,8 @@
 //  Copyright © 2021 Dodo Pizza. All rights reserved.
 //
 
+#if canImport(FirebasePerformance) && (os(iOS) || os(tvOS)) && !targetEnvironment(macCatalyst)
+
 import Foundation
 import BlackBox
 import DBThreadSafe
@@ -159,3 +161,20 @@ extension FirebasePerformanceLogger {
         return name
     }
 }
+
+#else
+
+import Foundation
+import BlackBox
+
+@available(*, unavailable, message: "FirebasePerformanceLogger is only available on iOS and tvOS when Firebase Performance SDK is present.")
+public final class FirebasePerformanceLogger: BBLoggerProtocol {
+    public init(levels: [BBLogLevel]) {}
+    
+    public func log(_ event: BlackBox.ErrorEvent) {}
+    public func log(_ event: BlackBox.GenericEvent) {}
+    public func logStart(_ event: BlackBox.StartEvent) {}
+    public func logEnd(_ event: BlackBox.EndEvent) {}
+}
+
+#endif

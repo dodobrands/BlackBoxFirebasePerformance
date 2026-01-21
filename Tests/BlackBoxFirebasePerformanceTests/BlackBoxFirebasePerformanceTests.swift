@@ -7,7 +7,6 @@
 
 import XCTest
 import BlackBox
-import FirebasePerformance
 @testable import BlackBoxFirebasePerformance
 
 class BlackBoxFirebasePerformanceTests: XCTestCase {
