@@ -1,4 +1,4 @@
-// swift-tools-version:6.0
+// swift-tools-version:6.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -21,7 +21,7 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         .package(
             url: "https://github.com/dodobrands/BlackBox",
-            .upToNextMajor(from: "4.0.1")
+            .upToNextMajor(from: "6.0.0")
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk",
@@ -29,7 +29,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/dodobrands/DBThreadSafe-ios",
-            .upToNextMajor(from: "2.0.0")
+            .upToNextMajor(from: "3.1.0")
         )
     ],
     targets: [
@@ -41,6 +41,9 @@ let package = Package(
                 "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "DBThreadSafe", package: "DBThreadSafe-ios")
+            ],
+            swiftSettings: [
+                .treatAllWarnings(as: .error)
             ]
         ),
         .testTarget(
@@ -49,6 +52,9 @@ let package = Package(
                 .targetItem(name: targetName, condition: nil),
                 "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
+            ],
+            swiftSettings: [
+                .treatAllWarnings(as: .error)
             ]
         ),
     ],

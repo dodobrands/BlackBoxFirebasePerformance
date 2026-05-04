@@ -6,7 +6,6 @@
 //
 
 import XCTest
-import BlackBox
 @testable import BlackBoxFirebasePerformance
 
 class BlackBoxFirebasePerformanceTests: XCTestCase {
