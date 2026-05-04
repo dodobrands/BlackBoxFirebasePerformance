@@ -34,8 +34,8 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         let traceName = name(of: event, forMetric: false)
         guard let trace = Performance.startTrace(name: traceName) else { return }
         
-        event.userInfo.map {
-            self.setMetricsOrAddAttributes(to: trace, from: $0)
+        if let userInfo = event.userInfo {
+            setMetricsOrAddAttributes(to: trace, from: userInfo)
         }
         incrementMetricForParentEvent(of: event)
         
@@ -47,8 +47,8 @@ public class FirebasePerformanceLogger: BBLoggerProtocol {
         
         guard let trace = traces.read ({ $0[id] })  else { return }
         
-        event.userInfo.map {
-            self.setMetricsOrAddAttributes(to: trace, from: $0)
+        if let userInfo = event.userInfo {
+            setMetricsOrAddAttributes(to: trace, from: userInfo)
         }
         
         trace.stop()
@@ -164,7 +164,6 @@ extension FirebasePerformanceLogger {
 
 #else
 
-import Foundation
 import BlackBox
 
 @available(*, unavailable, message: "FirebasePerformanceLogger is only available on iOS and tvOS when Firebase Performance SDK is present.")

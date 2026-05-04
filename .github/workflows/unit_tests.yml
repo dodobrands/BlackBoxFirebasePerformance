@@ -24,17 +24,17 @@ jobs:
         include:
           - destination: "platform=iOS Simulator"
             platform: ios
-            device: "iPhone 16"
+            device: "iPhone 17"
             system_prefix: "iOS"
           - destination: "platform=OS X"
             platform: macos
           - destination: "platform=tvOS Simulator"
             platform: tvos
-            device: "Apple TV"
+            device: "Apple TV 4K (3rd generation)"
             system_prefix: "tvOS"
           - destination: "platform=watchOS Simulator"
             platform: watchos
-            device: "Apple Watch Ultra 2 (49mm)"
+            device: "Apple Watch Ultra 3 (49mm)"
             system_prefix: "watchOS"
 
     steps:
@@ -71,6 +71,7 @@ jobs:
           -scheme ${{ env.SCHEME }}
           -destination '${{ steps.select-destination.outputs.dest }}'
           -quiet
+          SWIFT_SUPPRESS_WARNINGS=NO
 
       - name: Test
         run: >
@@ -78,6 +79,7 @@ jobs:
           -scheme ${{ env.SCHEME }}
           -destination '${{ steps.select-destination.outputs.dest }}'
           -quiet
+          SWIFT_SUPPRESS_WARNINGS=NO
 
   # This allows us to have a branch protection rule for tests and deploys with matrix
   status-for-matrix:
