@@ -50,12 +50,37 @@ jobs:
       - name: Resolve Dependencies
         run: xcodebuild -resolvePackageDependencies
 
-      - name: Download Simulator Runtime
+      - name: Resolve Simulator Runtime
         if: matrix.platform != 'macos'
+        id: resolve-runtime
         run: |
-          if ! xcrun simctl list runtimes | grep -Fq "${{ matrix.system_prefix }} ${{ env.OS_VERSION }}"; then
-            xcodebuild -downloadPlatform ${{ matrix.download_platform }} -buildVersion ${{ env.OS_VERSION }}
+          platform="${{ matrix.system_prefix }}"
+          requested="${{ env.OS_VERSION }}"
+          selected=""
+
+          if xcrun simctl list runtimes | grep -Fq "${platform} ${requested}"; then
+            selected="${requested}"
+          elif xcodebuild -downloadPlatform ${{ matrix.download_platform }} -buildVersion "${requested}" && \
+            xcrun simctl list runtimes | grep -Fq "${platform} ${requested}"; then
+            selected="${requested}"
           fi
+
+          if [ -z "${selected}" ]; then
+            selected="$(
+              xcrun simctl list runtimes |
+              awk -v platform="${platform}" '$0 ~ "^" platform " 26\\." && $0 !~ /unavailable/ { print $2 }' |
+              sort -V |
+              tail -1
+            )"
+          fi
+
+          if [ -z "${selected}" ]; then
+            echo "No available ${platform} 26.x runtime found" >&2
+            exit 1
+          fi
+
+          echo "Using ${platform} runtime ${selected}"
+          echo "version=${selected}" >> "$GITHUB_OUTPUT"
 
       - name: Create Simulator
         id: create_simulator
@@ -64,7 +89,7 @@ jobs:
         with:
           name: ${{ matrix.device }}
           device: ${{ matrix.device }}
-          system: ${{ matrix.system_prefix }}${{ env.OS_VERSION }}
+          system: ${{ matrix.system_prefix }}${{ steps.resolve-runtime.outputs.version }}
       
       - name: Select Destination
         id: select-destination
