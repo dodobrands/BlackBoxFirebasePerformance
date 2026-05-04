@@ -13,27 +13,30 @@ jobs:
   tests:
     runs-on: 'macos-latest'
 
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
-      OS_VERSION: "26.2"
+      OS_VERSION: "26.4"
 
     strategy:
       matrix:
         include:
           - destination: "platform=iOS Simulator"
             platform: ios
+            download_platform: "iOS"
             device: "iPhone 17"
             system_prefix: "iOS"
           - destination: "platform=OS X"
             platform: macos
           - destination: "platform=tvOS Simulator"
             platform: tvos
+            download_platform: "tvOS"
             device: "Apple TV 4K (3rd generation)"
             system_prefix: "tvOS"
           - destination: "platform=watchOS Simulator"
             platform: watchos
+            download_platform: "watchOS"
             device: "Apple Watch Ultra 3 (49mm)"
             system_prefix: "watchOS"
 
@@ -46,6 +49,13 @@ jobs:
 
       - name: Resolve Dependencies
         run: xcodebuild -resolvePackageDependencies
+
+      - name: Download Simulator Runtime
+        if: matrix.platform != 'macos'
+        run: |
+          if ! xcrun simctl list runtimes | grep -Fq "${{ matrix.system_prefix }} ${{ env.OS_VERSION }}"; then
+            xcodebuild -downloadPlatform ${{ matrix.download_platform }} -buildVersion ${{ env.OS_VERSION }}
+          fi
 
       - name: Create Simulator
         id: create_simulator
