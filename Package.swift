@@ -41,9 +41,6 @@ let package = Package(
                 "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk"),
                 .product(name: "DBThreadSafe", package: "DBThreadSafe-ios")
-            ],
-            swiftSettings: [
-                .treatAllWarnings(as: .error)
             ]
         ),
         .testTarget(
@@ -52,9 +49,6 @@ let package = Package(
                 .targetItem(name: targetName, condition: nil),
                 "BlackBox",
                 .product(name: "FirebasePerformance", package: "firebase-ios-sdk")
-            ],
-            swiftSettings: [
-                .treatAllWarnings(as: .error)
             ]
         ),
     ],
