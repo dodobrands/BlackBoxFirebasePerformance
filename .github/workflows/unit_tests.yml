@@ -17,28 +17,23 @@ jobs:
 
     env:
       SCHEME: "BlackBoxFirebasePerformance"
-      OS_VERSION: "26.4"
 
     strategy:
+      # One platform failing should not hide the state of the other three.
+      fail-fast: false
       matrix:
         include:
           - destination: "platform=iOS Simulator"
             platform: ios
-            download_platform: "iOS"
-            device: "iPhone 17"
-            system_prefix: "iOS"
+            sim_profile: ios
           - destination: "platform=OS X"
             platform: macos
           - destination: "platform=tvOS Simulator"
             platform: tvos
-            download_platform: "tvOS"
-            device: "Apple TV 4K (3rd generation)"
-            system_prefix: "tvOS"
+            sim_profile: tvos
           - destination: "platform=watchOS Simulator"
             platform: watchos
-            download_platform: "watchOS"
-            device: "Apple Watch Ultra 3 (49mm)"
-            system_prefix: "watchOS"
+            sim_profile: watchos
 
     steps:
       - name: Get source code
@@ -50,46 +45,21 @@ jobs:
       - name: Resolve Dependencies
         run: xcodebuild -resolvePackageDependencies
 
-      - name: Resolve Simulator Runtime
+      - name: Read simulator configuration
+        id: read-simulator-config
         if: matrix.platform != 'macos'
-        id: resolve-runtime
-        run: |
-          platform="${{ matrix.system_prefix }}"
-          requested="${{ env.OS_VERSION }}"
-          selected=""
-
-          if xcrun simctl list runtimes | grep -Fq "${platform} ${requested}"; then
-            selected="${requested}"
-          elif xcodebuild -downloadPlatform ${{ matrix.download_platform }} -buildVersion "${requested}" && \
-            xcrun simctl list runtimes | grep -Fq "${platform} ${requested}"; then
-            selected="${requested}"
-          fi
-
-          if [ -z "${selected}" ]; then
-            selected="$(
-              xcrun simctl list runtimes |
-              awk -v platform="${platform}" '$0 ~ "^" platform " 26\\." && $0 !~ /unavailable/ { print $2 }' |
-              sort -V |
-              tail -1
-            )"
-          fi
-
-          if [ -z "${selected}" ]; then
-            echo "No available ${platform} 26.x runtime found" >&2
-            exit 1
-          fi
-
-          echo "Using ${platform} runtime ${selected}"
-          echo "version=${selected}" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/read_simulator_config
+        with:
+          profile: ${{ matrix.sim_profile }}
 
       - name: Create Simulator
         id: create_simulator
         if: matrix.platform != 'macos'
         uses: ./.github/actions/create_sim
         with:
-          name: ${{ matrix.device }}
-          device: ${{ matrix.device }}
-          system: ${{ matrix.system_prefix }}${{ steps.resolve-runtime.outputs.version }}
+          name: ${{ steps.read-simulator-config.outputs.sim-name }}
+          device: ${{ steps.read-simulator-config.outputs.sim-device }}
+          system: ${{ steps.read-simulator-config.outputs.sim-system }}
       
       - name: Select Destination
         id: select-destination

@@ -1,0 +1,53 @@
+name: Read Simulator Configuration
+
+description: Reads simulator configuration from .simulator-config.json file
+
+inputs:
+  profile:
+    description: Simulator profile key (e.g. primary, ios18-6)
+    required: false
+    default: primary
+
+outputs:
+  sim-name:
+    description: Simulator name
+    value: ${{ steps.read-config.outputs.sim-name }}
+  sim-device:
+    description: Simulator device
+    value: ${{ steps.read-config.outputs.sim-device }}
+  sim-system:
+    description: Simulator iOS version
+    value: ${{ steps.read-config.outputs.sim-system }}
+
+runs:
+  using: composite
+
+  steps:
+    - name: Read simulator configuration
+      id: read-config
+      shell: bash
+      env:
+        SIMULATOR_PROFILE: ${{ inputs.profile }}
+      run: |
+        if [[ ! -f .simulator-config.json ]]; then
+          echo "::error::.simulator-config.json file not found"
+          exit 1
+        fi
+
+        profile="$SIMULATOR_PROFILE"
+
+        if ! jq -e --arg profile "$profile" 'has($profile)' .simulator-config.json >/dev/null; then
+          available=$(jq -r 'keys | sort | join(", ")' .simulator-config.json)
+          echo "::error::Simulator profile '$profile' not found. Available: $available"
+          exit 1
+        fi
+
+        for key in name device system; do
+          value=$(jq -r --arg profile "$profile" --arg key "$key" '.[$profile][$key] // empty' .simulator-config.json)
+          if [[ -z "$value" ]]; then
+            echo "::error::Simulator profile '$profile' missing required key '$key'"
+            exit 1
+          fi
+          echo "sim-$key=$value" >> "$GITHUB_OUTPUT"
+        done
+
