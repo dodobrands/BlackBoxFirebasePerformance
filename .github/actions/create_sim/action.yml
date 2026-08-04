@@ -1,14 +1,14 @@
-name: 'Create iOS Simulator'
+name: 'Create Simulator'
 
 inputs:
   name:
     description: 'Name of created simulator'
     required: true
   device:
-    description: "Device, e.g. 'iPhone 11'"
+    description: "Device, e.g. 'iPhone 16'"
     required: true
   system:
-    description: "System, e.g. 'iOS17.4'"
+    description: "Platform and version, e.g. 'iOS26.6'"
     required: true
 
 outputs:
@@ -20,10 +20,111 @@ runs:
   using: "composite"
 
   steps:
+  - name: List available runtimes
+    shell: bash
+    run: |
+      echo "Available runtimes:"
+      xcrun simctl list runtimes
+
+  - name: Ensure simulator runtime is installed
+    shell: bash
+    env:
+      SYSTEM: ${{ inputs.system }}
+    run: |
+      set -euo pipefail
+
+      # Split "iOS26.6" into platform ("iOS") and version ("26.6").
+      # Works for tvOS/watchOS too, so this action stays platform-agnostic.
+      if [[ ! "$SYSTEM" =~ ^([A-Za-z]+)([0-9][0-9.]*)$ ]]; then
+        echo "::error::Cannot parse system '$SYSTEM', expected e.g. 'iOS26.6'"
+        exit 1
+      fi
+      platform="${BASH_REMATCH[1]}"
+      version="${BASH_REMATCH[2]}"
+
+      if xcrun simctl list runtimes --json \
+        | jq -e --arg p "$platform" --arg v "$version" \
+          '.runtimes[] | select(
+             .isAvailable == true
+             and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime." + $p + "-"))
+             and (.version == $v or (.version | startswith($v + ".")))
+           )' >/dev/null; then
+        echo "${platform} ${version} runtime is already installed"
+        exit 0
+      fi
+
+      echo "${platform} ${version} runtime not found. Downloading runtime..."
+
+      export_path="${RUNNER_TEMP:-/tmp}/simruntime-${platform}-${version}"
+      mkdir -p "$export_path"
+
+      xcodebuild -downloadPlatform "$platform" -exportPath "$export_path" -buildVersion "$version"
+
+      dmg=$(find "$export_path" -maxdepth 2 -name "*.dmg" | head -n 1 || true)
+      if [[ -z "$dmg" ]]; then
+        echo "::error::Downloaded runtime image (.dmg) not found in $export_path"
+        exit 1
+      fi
+
+      xcodebuild -runFirstLaunch
+      xcodebuild -importPlatform "$dmg"
+
   - name: Create
     id: create
     shell: bash
+    env:
+      NAME: ${{ inputs.name }}
+      DEVICE: ${{ inputs.device }}
+      SYSTEM: ${{ inputs.system }}
     run: |
-      uuid=$(xcrun simctl create "${{ inputs.name }}" "${{ inputs.device }}" "${{ inputs.system }}")
-      xcrun simctl boot $uuid
+      set -euo pipefail
+
+      [[ "$SYSTEM" =~ ^([A-Za-z]+)([0-9][0-9.]*)$ ]]
+      platform="${BASH_REMATCH[1]}"
+      version="${BASH_REMATCH[2]}"
+
+      # Resolve the full runtime identifier instead of passing "iOS26.6" straight to simctl.
+      # simctl rejects the short form with "Invalid runtime: iOS26.6" whenever the installed
+      # runtime reports a patch version (26.6.1) rather than the marketing one (26.6).
+      # The full identifier — "com.apple.CoreSimulator.SimRuntime.iOS-26-6" — always works.
+      #
+      # The jq filter:
+      # - isAvailable == true — skip runtimes that are listed but not actually installed
+      # - identifier prefix   — keep us on the requested platform (26.6 also matches tvOS/watchOS)
+      # - version match       — exact ("26.6") or patch ("26.6.1" starts with "26.6.")
+      runtime_id=$(xcrun simctl list runtimes --json \
+        | jq -r --arg p "$platform" --arg v "$version" \
+          '.runtimes[] | select(
+             .isAvailable == true
+             and (.identifier | startswith("com.apple.CoreSimulator.SimRuntime." + $p + "-"))
+             and (.version == $v or (.version | startswith($v + ".")))
+           ) | .identifier' \
+        | head -n 1)
+
+      if [[ -z "$runtime_id" ]]; then
+        echo "::error::Could not resolve runtime identifier for ${platform} ${version}"
+        exit 1
+      fi
+
+      echo "Resolved runtime: ${runtime_id}"
+      uuid=$(xcrun simctl create "$NAME" "$DEVICE" "$runtime_id")
       echo "uuid=$uuid" >> $GITHUB_OUTPUT
+
+      echo "Boot $uuid with retry mechanism"
+      ${{ github.action_path }}/retry-with-timeout.sh 60 3 \
+        --on-retry "xcrun simctl shutdown all" \
+        xcrun simctl boot $uuid
+
+      echo "Update simulator preferences $uuid"
+      xcrun simctl spawn $uuid defaults write com.apple.Preferences DidShowContinuousPathIntroduction 1
+
+      # workaround for random tests hanging — reboot simulator and wait for boot
+      echo "Shutdown $uuid"
+      xcrun simctl shutdown $uuid
+
+      # A cold first boot of a freshly created device runs data migration
+      # (CoreLocationMigrator and friends), which alone can outlast a 60s budget.
+      echo "Boot again and wait for boot $uuid"
+      ${{ github.action_path }}/retry-with-timeout.sh 300 2 \
+        --on-retry "xcrun simctl shutdown all" \
+        xcrun simctl bootstatus $uuid -b

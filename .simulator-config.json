@@ -1,0 +1,17 @@
+{
+  "ios": {
+    "name": "Test-Phone",
+    "device": "iPhone 17",
+    "system": "iOS26.5"
+  },
+  "tvos": {
+    "name": "Test-TV",
+    "device": "Apple TV 4K (3rd generation)",
+    "system": "tvOS26.5"
+  },
+  "watchos": {
+    "name": "Test-Watch",
+    "device": "Apple Watch Ultra 3 (49mm)",
+    "system": "watchOS26.5"
+  }
+}
