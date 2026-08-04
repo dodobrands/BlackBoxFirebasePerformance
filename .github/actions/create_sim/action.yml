@@ -122,7 +122,9 @@ runs:
       echo "Shutdown $uuid"
       xcrun simctl shutdown $uuid
 
+      # A cold first boot of a freshly created device runs data migration
+      # (CoreLocationMigrator and friends), which alone can outlast a 60s budget.
       echo "Boot again and wait for boot $uuid"
-      ${{ github.action_path }}/retry-with-timeout.sh 60 3 \
+      ${{ github.action_path }}/retry-with-timeout.sh 300 2 \
         --on-retry "xcrun simctl shutdown all" \
         xcrun simctl bootstatus $uuid -b
