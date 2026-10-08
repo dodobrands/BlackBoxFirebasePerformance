@@ -11,7 +11,7 @@
   },
   "watchos": {
     "name": "Test-Watch",
-    "device": "Apple Watch Ultra 3 (49mm)",
+    "device": "Apple Watch Ultra 4 (49mm)",
     "system": "watchOS27.0"
   }
 }
