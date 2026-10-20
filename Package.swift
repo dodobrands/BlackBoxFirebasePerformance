@@ -25,7 +25,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk",
-            .upToNextMajor(from: "12.0.0")
+            .upToNextMajor(from: "13.0.1")
         ),
         .package(
             url: "https://github.com/dodobrands/DBThreadSafe-ios",
